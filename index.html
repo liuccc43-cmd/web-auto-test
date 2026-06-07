@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务注册</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* 背景装饰 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+    animation: bgShift 20s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes bgShift {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(1%, -1%); }
+    66% { transform: translate(-1%, 1%); }
+  }
+
+  /* 主容器 */
+  .container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    padding: 0 24px;
+    z-index: 1;
+  }
+
+  /* 进度条区域 */
+  .progress-section {
+    margin-bottom: 40px;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.5px;
+  }
+
+  .progress-step {
+    font-weight: 600;
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+    background-size: 200% 100%;
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: shimmer 2s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 卡片 */
+  .card-wrapper {
+    position: relative;
+    min-height: 320px;
+  }
+
+  .card {
+    position: absolute;
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 48px 36px;
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+    transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .card.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    position: relative;
+  }
+
+  .card.exit-left {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.96);
+  }
+
+  /* 步骤编号 */
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .step-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #a78bfa;
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.6);
+  }
+
+  /* 标签 */
+  .card-label {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .card-hint {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 32px;
+  }
+
+  /* 输入框 */
+  .input-field {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-size: 20px;
+    color: #fff;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+  }
+
+  .input-field:focus {
+    border-color: #818cf8;
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  }
+
+  .input-field.error {
+    border-color: #f87171;
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.2);
+    animation: shake 0.4s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .error-msg {
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 10px;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.25s, transform 0.25s;
+  }
+
+  .error-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 提示区域 */
+  .hint-section {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .enter-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: #a5b4fc;
+    letter-spacing: 0.5px;
+  }
+
+  .enter-key .key-icon {
+    display: inline-block;
+    font-size: 16px;
+  }
+
+  .hint-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* 汇总页 */
+  .summary-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 40px 36px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .summary-card.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .summary-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .summary-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 28px;
+  }
+
+  .summary-list {
+    list-style: none;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .summary-item:last-child { border-bottom: none; }
+
+  .summary-key {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.5px;
+  }
+
+  .summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+
+  .btn-submit {
+    width: 100%;
+    margin-top: 32px;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+  }
+
+  .btn-submit:active {
+    transform: scale(0.98);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* 成功提示 */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 100;
+  }
+
+  .success-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .success-box {
+    background: rgba(30, 27, 75, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .success-overlay.show .success-box {
+    transform: scale(1);
+  }
+
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 24px;
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.3);
+  }
+
+  .success-message {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .success-detail {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* 响应式 */
+  @media (max-width: 500px) {
+    .card { padding: 36px 24px; }
+    .card-label { font-size: 24px; }
+    .input-field { font-size: 18px; padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+  <!-- 进度区域 -->
+  <div class="progress-section" id="progressSection">
+    <div class="progress-info">
+      <span class="progress-step" id="stepLabel">问题 1 / 6</span>
+      <span class="progress-percent" id="stepPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- 卡片区域 -->
+  <div class="card-wrapper" id="cardWrapper"></div>
+</div>
+
+<!-- 成功弹窗 -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">✓</div>
+    <div class="success-message">注册提交成功！</div>
+    <div class="success-detail">感谢您的注册，我们将尽快处理您的信息。</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ========== 问题定义 ==========
+  const questions = [
+    {
+      id: 'firstName',
+      label: '请输入您的名字',
+      hint: '例如：志明',
+      placeholder: '请输入名字…',
+      type: 'text',
+      errorMsg: '请填写您的名字后再继续'
+    },
+    {
+      id: 'lastName',
+      label: '请输入您的姓氏',
+      hint: '例如：张',
+      placeholder: '请输入姓氏…',
+      type: 'text',
+      errorMsg: '请填写您的姓氏后再继续'
+    },
+    {
+      id: 'phone',
+      label: '请输入您的电话号码',
+      hint: '例如：138-0000-0000',
+      placeholder: '请输入电话号码…',
+      type: 'tel',
+      errorMsg: '请填写您的电话号码后再继续'
+    },
+    {
+      id: 'company',
+      label: '请输入您的公司名称',
+      hint: '您目前所在的公司或组织',
+      placeholder: '请输入公司名称…',
+      type: 'text',
+      errorMsg: '请填写公司名称后再继续'
+    },
+    {
+      id: 'jobTitle',
+      label: '请输入您的职位',
+      hint: '例如：产品经理',
+      placeholder: '请输入职位…',
+      type: 'text',
+      errorMsg: '请填写您的职位后再继续'
+    },
+    {
+      id: 'email',
+      label: '请输入您的电子邮箱',
+      hint: '例如：zhiming@company.com',
+      placeholder: '请输入电子邮箱…',
+      type: 'email',
+      errorMsg: '请填写有效的电子邮箱后再继续'
+    }
+  ];
+
+  const totalSteps = questions.length;
+  let currentStep = 0;
+  const answers = {};
+
+  // ========== DOM 引用 ==========
+  const cardWrapper = document.getElementById('cardWrapper');
+  const stepLabel = document.getElementById('stepLabel');
+  const stepPercent = document.getElementById('stepPercent');
+  const progressFill = document.getElementById('progressFill');
+  const progressSection = document.getElementById('progressSection');
+  const successOverlay = document.getElementById('successOverlay');
+
+  // ========== 更新进度条 ==========
+  function updateProgress(step) {
+    const pct = Math.round((step / totalSteps) * 100);
+    stepLabel.textContent = `问题 ${step + 1} / ${totalSteps}`;
+    stepPercent.textContent = `${pct}%`;
+    progressFill.style.width = `${pct}%`;
+  }
+
+  // ========== 渲染卡片 ==========
+  function renderCard(index) {
+    const q = questions[index];
+    const card = document.createElement('div');
+    card.className = 'card active';
+    card.innerHTML = `
+      <div class="step-badge">
+        <span class="dot"></span>
+        <span>第 ${index + 1} 步 / 共 ${totalSteps} 步</span>
+      </div>
+      <div class="card-label">${q.label}</div>
+      <div class="card-hint">${q.hint}</div>
+      <input
+        type="${q.type}"
+        class="input-field"
+        id="inputField"
+        placeholder="${q.placeholder}"
+        value="${escapeHtml(answers[q.id] || '')}"
+        autocomplete="off"
+        autofocus
+      >
+      <div class="error-msg" id="errorMsg">${q.errorMsg}</div>
+      <div class="hint-section">
+        <span class="enter-key">
+          <span class="key-icon">↵</span> Enter
+        </span>
+        <span class="hint-text">按回车键继续</span>
+      </div>
+    `;
+
+    cardWrapper.innerHTML = '';
+    cardWrapper.appendChild(card);
+
+    const input = card.querySelector('#inputField');
+    const errorEl = card.querySelector('#errorMsg');
+
+    // 自动聚焦
+    setTimeout(() => input.focus(), 100);
+
+    // 回车事件
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const value = input.value.trim();
+        if (!value) {
+          // 显示错误
+          input.classList.add('error');
+          errorEl.classList.add('show');
+          setTimeout(() => {
+            input.classList.remove('error');
+            errorEl.classList.remove('show');
+          }, 2000);
+          return;
+        }
+        // 保存答案
+        answers[q.id] = value;
+        currentStep++;
+
+        if (currentStep < totalSteps) {
+          updateProgress(currentStep);
+          transitionOut(card, () => renderCard(currentStep));
+        } else {
+          // 全部完成 → 显示汇总
+          updateProgress(totalSteps);
+          transitionOut(card, renderSummary);
+        }
+      }
+    });
+  }
+
+  // ========== 卡片退出动画 ==========
+  function transitionOut(card, callback) {
+    card.classList.remove('active');
+    card.classList.add('exit-left');
+    setTimeout(callback, 400);
+  }
+
+  // ========== 汇总页 ==========
+  function renderSummary() {
+    progressSection.style.display = 'none';
+
+    const summary = document.createElement('div');
+    summary.className = 'summary-card';
+    summary.innerHTML = `
+      <div class="summary-title">确认您的注册信息</div>
+      <div class="summary-subtitle">请核对以下信息，确认无误后提交</div>
+      <ul class="summary-list">
+        <li class="summary-item">
+          <span class="summary-key">名字</span>
+          <span class="summary-value">${escapeHtml(answers.firstName)}</span>
+        </li>
+        <li class="summary-item">
+          <span class="summary-key">姓氏</span>
+          <span class="summary-value">${escapeHtml(answers.lastName)}</span>
+        </li>
+        <li class="summary-item">
+          <span class="summary-key">电话号码</span>
+          <span class="summary-value">${escapeHtml(answers.phone)}</span>
+        </li>
+        <li class="summary-item">
+          <span class="summary-key">公司名称</span>
+          <span class="summary-value">${escapeHtml(answers.company)}</span>
+        </li>
+        <li class="summary-item">
+          <span class="summary-key">职位</span>
+          <span class="summary-value">${escapeHtml(answers.jobTitle)}</span>
+        </li>
+        <li class="summary-item">
+          <span class="summary-key">电子邮箱</span>
+          <span class="summary-value">${escapeHtml(answers.email)}</span>
+        </li>
+      </ul>
+      <button class="btn-submit" id="btnSubmit">✓ 确认提交</button>
+      <div class="hint-section" style="justify-content: center; margin-top: 20px;">
+        <span class="enter-key" style="cursor: pointer;" id="backEdit">
+          ← 返回修改
+        </span>
+      </div>
+    `;
+
+    cardWrapper.innerHTML = '';
+    cardWrapper.appendChild(summary);
+
+    // 动画显示
+    requestAnimationFrame(() => summary.classList.add('show'));
+
+    // 提交按钮
+    document.getElementById('btnSubmit').addEventListener('click', handleSubmit);
+
+    // 返回修改
+    document.getElementById('backEdit').addEventListener('click', () => {
+      currentStep = 0;
+      progressSection.style.display = 'block';
+      updateProgress(0);
+      summary.style.opacity = '0';
+      summary.style.transform = 'translateY(10px)';
+      setTimeout(() => renderCard(0), 300);
+    });
+  }
+
+  // ========== 提交处理 ==========
+  function handleSubmit() {
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+
+    // 模拟提交延迟
+    setTimeout(() => {
+      successOverlay.classList.add('show');
+      // 点击成功弹窗关闭
+      successOverlay.addEventListener('click', function() {
+        successOverlay.classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = '✓ 确认提交';
+      }, { once: true });
+    }, 800);
+  }
+
+  // ========== HTML 转义 ==========
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ========== 启动 ==========
+  updateProgress(0);
+  renderCard(0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "playwright-agent-demo",
+  "version": "1.0.0",
+  "description": "Playwright 浏览器自动化演示项目",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "screenshot": "playwright screenshot",
+    "codegen": "playwright codegen",
+    "demo:screenshot": "node scripts/screenshot.js",
+    "demo:test": "node scripts/browser-test.js"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
